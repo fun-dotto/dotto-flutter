@@ -5,12 +5,16 @@ import 'package:flutter/material.dart';
 final class SearchCourseResult extends StatelessWidget {
   const SearchCourseResult({
     required this.records,
+    required this.personalLessonIdList,
     required this.onTapped,
+    required this.onAddButtonTapped,
     super.key,
   });
 
   final List<Map<String, dynamic>> records;
+  final List<int> personalLessonIdList;
   final void Function(Map<String, dynamic>) onTapped;
+  final void Function(int lessonId) onAddButtonTapped;
 
   Future<Map<int, String>> getWeekPeriod(List<int> lessonIdList) async {
     final records = await SearchCourseRepository().fetchWeekPeriodDB(
@@ -67,7 +71,9 @@ final class SearchCourseResult extends StatelessWidget {
                 lessonId: lessonId,
                 lessonName: lessonName,
                 weekPeriodString: weekPeriodString,
+                isAdded: personalLessonIdList.contains(lessonId),
                 onTapped: () => onTapped(record),
+                onAddButtonTapped: () => onAddButtonTapped(lessonId),
               );
             },
           );

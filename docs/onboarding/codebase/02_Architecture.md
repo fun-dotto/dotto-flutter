@@ -27,21 +27,21 @@ graph TD;
 
 ### View
 
-Dotto では、1 つの画面を 1 つの View とします。
+Dotto では、1 つの画面を 1 つの Screen とします。
 
-Flutter の StatefulWidget により、Widget が状態を持つことが出来ますが、Dotto では原則、そのような方法は使いません。
+Flutter の StatefulWidget により、Widget が状態を持つことが出来ますが、Dotto では原則、 ConsumerStatefulWidget を使用します。
 
-View の状態は後述の ViewModel によって管理されます。
+Screen の状態は後述の ViewModel によって管理されます。
 
-View は細かい Widget に分けることが出来ます。その場合でも、子 Widget は状態を持ってはいけません。
+Screen は細かい Widget に分けることが出来ます。その場合でも、子 Widget は状態を持ってはいけません。
 
 ### ViewModel
 
-1 つの View に対して、1 つの ViewModel が存在します。
+1 つの Screen に対して、1 つの ViewModel が存在します。
 
-ViewModel の役割は、View を構成するために必要な状態を保持し、その操作を行います。
+ViewModel の役割は、Screen を構成するために必要な状態 (ViewState) を保持し、その操作を行います。
 
-Flutter の Widget の仕組み上、ViewModel が View を操作することはなく、すべて ViewModel の状態が変化すると Widget が再描画されます。
+Flutter の Widget の仕組み上、ViewModel が Screen を操作することはなく、すべて ViewModel の状態が変化すると Widget が再描画されます。
 
 ### UseCase
 

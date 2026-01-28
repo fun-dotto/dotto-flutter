@@ -1,4 +1,4 @@
-import 'package:dotto/api/api_environment.dart';
+import 'package:dotto/data/api_environment.dart';
 import 'package:dotto/feature/debug/debug_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

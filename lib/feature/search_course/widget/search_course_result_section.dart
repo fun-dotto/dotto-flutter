@@ -1,24 +1,31 @@
-import 'package:dotto/feature/search_course/search_course_viewmodel.dart';
 import 'package:dotto/feature/search_course/widget/search_course_result.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final class SearchCourseResultSection extends ConsumerWidget {
-  const SearchCourseResultSection({required this.onTapped, super.key});
+final class SearchCourseResultSection extends StatelessWidget {
+  const SearchCourseResultSection({
+    required this.courses,
+    required this.personalLessonIdList,
+    required this.onTapped,
+    required this.onAddButtonTapped,
+    super.key,
+  });
 
+  final List<Map<String, dynamic>> courses;
+  final List<int> personalLessonIdList;
   final void Function(Map<String, dynamic>) onTapped;
+  final void Function(int lessonId) onAddButtonTapped;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final viewModel = ref.watch(searchCourseViewModelProvider);
-
-    if (viewModel.value?.searchResults == null) {
+  Widget build(BuildContext context) {
+    if (courses.isEmpty) {
       return const SizedBox.shrink();
     }
-    if (viewModel.value?.searchResults!.isNotEmpty ?? false) {
+    if (courses.isNotEmpty) {
       return SearchCourseResult(
-        records: viewModel.value?.searchResults ?? [],
+        records: courses,
+        personalLessonIdList: personalLessonIdList,
         onTapped: onTapped,
+        onAddButtonTapped: onAddButtonTapped,
       );
     }
     return const Center(

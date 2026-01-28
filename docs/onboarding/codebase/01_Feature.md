@@ -6,7 +6,7 @@ Dotto アプリは、公立はこだて未来大学の情報をまとめたア�
 
 ### Home
 
-![Architecture](https://img.shields.io/badge/Architecture-None-red.svg)
+![Architecture](https://img.shields.io/badge/Architecture-MVVM+UseCase-green.svg)
 
 ホーム画面を提供する Feature です。
 
@@ -89,7 +89,7 @@ Dotto モバイルアプリの開発者一覧を表示する機能です。
 
 ### Search Course
 
-![Architecture](https://img.shields.io/badge/Architecture-None-red.svg)
+![Architecture](https://img.shields.io/badge/Architecture-MVVM+UseCase-green.svg)
 ![DataSource](https://img.shields.io/badge/Data_Source-Local-red.svg)
 
 科目検索機能を提供する Feature です。
@@ -116,7 +116,7 @@ Dotto モバイルアプリの開発者一覧を表示する機能です。
 
 ### Timetable
 
-![Architecture](https://img.shields.io/badge/Architecture-None-red.svg)
+![Architecture](https://img.shields.io/badge/Architecture-MVVM+UseCase-green.svg)
 ![DataSource](https://img.shields.io/badge/Data_Source-Firebase-red.svg)
 
 時間割機能を提供する Feature です。

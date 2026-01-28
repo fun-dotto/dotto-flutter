@@ -1,4 +1,4 @@
-import 'package:dotto/api/api_client.dart';
+import 'package:dotto/data/api_client.dart';
 import 'package:dotto/domain/announcement.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

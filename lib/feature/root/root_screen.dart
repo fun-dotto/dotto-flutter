@@ -1,6 +1,6 @@
 import 'package:dotto/domain/tab_item.dart';
 import 'package:dotto/feature/assignment/assignment_list_screen.dart';
-import 'package:dotto/feature/home/home.dart';
+import 'package:dotto/feature/home/home_screen.dart';
 import 'package:dotto/feature/map/map_screen.dart';
 import 'package:dotto/feature/root/root_viewmodel.dart';
 import 'package:dotto/feature/root/root_viewmodel_state.dart';

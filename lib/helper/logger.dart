@@ -1,5 +1,5 @@
 import 'package:dotto/domain/tab_item.dart';
-import 'package:dotto/feature/timetable/domain/timetable_period_style.dart';
+import 'package:dotto/domain/timetable_period_style.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';

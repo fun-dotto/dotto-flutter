@@ -1,4 +1,4 @@
-import 'package:dotto/api/firebase/room_api.dart';
+import 'package:dotto/data/firebase/room_api.dart';
 import 'package:dotto/domain/floor.dart';
 import 'package:dotto/domain/room.dart';
 import 'package:dotto/domain/room_schedule.dart';

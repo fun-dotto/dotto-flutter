@@ -6,7 +6,7 @@ import 'package:dotto/feature/bus/controller/bus_is_to_controller.dart';
 import 'package:dotto/feature/bus/controller/bus_is_weekday_controller.dart';
 import 'package:dotto/feature/bus/controller/bus_polling_controller.dart';
 import 'package:dotto/feature/bus/controller/my_bus_stop_controller.dart';
-import 'package:dotto/feature/bus/widget/bus_card.dart';
+import 'package:dotto/feature/bus/widget/bus_card_content.dart';
 import 'package:dotto/feature/bus/widget/bus_stop_select.dart';
 import 'package:dotto/feature/bus/widget/bus_timetable.dart';
 import 'package:dotto_design_system/component/button.dart';
@@ -157,7 +157,7 @@ final class BusScreen extends ConsumerWidget {
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: BusCard(
+                  child: BusCardContent(
                     busTrip.route,
                     fromBusTripStop.time,
                     toBusTripStop.time,

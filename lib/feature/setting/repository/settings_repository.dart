@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dotto/data/db/course_db.dart';
 import 'package:dotto/domain/user_preference_keys.dart';
 import 'package:dotto/feature/setting/controller/settings_controller.dart';
-import 'package:dotto/feature/timetable/repository/timetable_repository.dart';
 import 'package:dotto/helper/firebase_auth_repository.dart';
 import 'package:dotto/helper/user_preference_repository.dart';
+import 'package:dotto/repository/timetable_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -70,10 +71,11 @@ final class SettingsRepository {
       callback(user);
       await saveFCMToken(user);
       if (context.mounted) {
-        await TimetableRepository().loadPersonalTimetableListOnLogin(
-          context,
-          ref,
-        );
+        final repository = ref.read(timetableRepositoryProvider);
+        final result = await repository.loadPersonalTimetableListOnLogin();
+        if (result is TimetableConflictDetected && context.mounted) {
+          await _showConflictDialog(context, ref, repository, result);
+        }
       }
       return;
     }
@@ -82,6 +84,66 @@ final class SettingsRepository {
         context,
       ).showSnackBar(const SnackBar(content: Text('ログインできませんでした。')));
     }
+  }
+
+  Future<void> _showConflictDialog(
+    BuildContext context,
+    WidgetRef ref,
+    TimetableRepository repository,
+    TimetableConflictDetected conflict,
+  ) async {
+    final firestoreLessonNameList = await CourseDB.getLessonNameList(
+      conflict.firestoreOnlyIds,
+    );
+    final localLessonNameList = await CourseDB.getLessonNameList(
+      conflict.localOnlyIds,
+    );
+
+    if (!context.mounted) return;
+
+    await showDialog<void>(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('データの同期'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                const Text(
+                  'クラウドに保存された時間割と端末に保存された時間割が異なっています。どちらを残しますか？',
+                ),
+                const Text('-- クラウドにのみ存在する科目 --'),
+                ...firestoreLessonNameList.map(Text.new),
+                const SizedBox(height: 10),
+                const Text('-- 端末にのみ存在する科目 --'),
+                ...localLessonNameList.map(Text.new),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                await repository.resolveConflictWithFirestore(conflict);
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('クラウドに保存された時間割を残す'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await repository.resolveConflictWithLocal(conflict);
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('端末に保存された時間割を残す'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> onLogout(void Function() logout) async {

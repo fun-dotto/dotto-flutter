@@ -13,23 +13,20 @@ final class TimetableButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsGeometry.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          DottoButton(
-            onPressed: onCourseCancellationPressed,
-            type: DottoButtonType.text,
-            child: const Text('休講・補講'),
-          ),
-          const Spacer(),
-          DottoButton(
-            onPressed: onEditTimetablePressed,
-            type: DottoButtonType.text,
-            child: const Text('時間割を編集'),
-          ),
-        ],
-      ),
+    return Row(
+      children: [
+        DottoButton(
+          onPressed: onCourseCancellationPressed,
+          type: DottoButtonType.text,
+          child: const Text('休講・補講'),
+        ),
+        const Spacer(),
+        DottoButton(
+          onPressed: onEditTimetablePressed,
+          type: DottoButtonType.text,
+          child: const Text('時間割を編集'),
+        ),
+      ],
     );
   }
 }

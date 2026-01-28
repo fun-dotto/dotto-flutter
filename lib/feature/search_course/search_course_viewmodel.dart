@@ -2,8 +2,9 @@ import 'package:collection/collection.dart';
 import 'package:dotto/feature/search_course/domain/search_course_filter_option_choice.dart';
 import 'package:dotto/feature/search_course/domain/search_course_filter_options.dart';
 import 'package:dotto/feature/search_course/repository/search_course_repository.dart';
-import 'package:dotto/feature/search_course/search_course_usecase.dart';
-import 'package:dotto/feature/search_course/search_course_viewmodel_state.dart';
+import 'package:dotto/feature/search_course/search_course_domain_error.dart';
+import 'package:dotto/feature/search_course/search_course_service.dart';
+import 'package:dotto/feature/search_course/search_course_viewstate.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -11,11 +12,13 @@ part 'search_course_viewmodel.g.dart';
 
 @riverpod
 final class SearchCourseViewModel extends _$SearchCourseViewModel {
+  late final SearchCourseService _service;
+
   @override
-  Future<SearchCourseViewModelState> build() async {
-    final grade = await SearchCourseUsecase().getUserGrade();
-    final academicArea = await SearchCourseUsecase().getUserAcademicArea();
-    return SearchCourseViewModelState(
+  SearchCourseViewState build() {
+    _service = SearchCourseService(ref);
+
+    return SearchCourseViewState(
       selectedChoicesMap: Map.fromIterables(
         SearchCourseFilterOptions.values,
         SearchCourseFilterOptions.values.map((e) => []),
@@ -28,38 +31,57 @@ final class SearchCourseViewModel extends _$SearchCourseViewModel {
       searchResults: null,
       textEditingController: TextEditingController(),
       focusNode: FocusNode(),
-      grade: grade,
-      academicArea: academicArea,
+      grade: const AsyncValue.loading(),
+      academicArea: const AsyncValue.loading(),
+      personalLessonIdList: const AsyncValue.loading(),
+    );
+  }
+
+  Future<void> onAppear() async {
+    await _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final grade = await _service.getUserGrade();
+    final academicArea = await _service.getUserAcademicArea();
+    final personalLessonIdList = await _service.getPersonalLessonIdList();
+    state = state.copyWith(
+      grade: AsyncValue.data(grade),
+      academicArea: AsyncValue.data(academicArea),
+      personalLessonIdList: AsyncValue.data(personalLessonIdList),
+    );
+  }
+
+  Future<void> onAddButtonTapped(int lessonId) async {
+    final personalLessonIdList = await _service.getPersonalLessonIdList();
+    if (!personalLessonIdList.contains(lessonId)) {
+      if (await _service.isOverSelected(lessonId)) {
+        throw SearchCourseDomainError.overSelected;
+      } else {
+        await _service.addLesson(lessonId);
+      }
+    } else {
+      await _service.removeLesson(lessonId);
+    }
+    final renewedPersonalLessonIdList = await _service
+        .getPersonalLessonIdList();
+    state = state.copyWith(
+      personalLessonIdList: AsyncValue.data(renewedPersonalLessonIdList),
     );
   }
 
   Future<void> onSearchButtonTapped() async {
-    switch (state) {
-      case AsyncData(:final value):
-        value.focusNode.unfocus();
-        final repository = SearchCourseRepository();
-        final searchResults = await repository.searchCourses(
-          selectedChoicesMap: value.selectedChoicesMap,
-          searchWord: value.textEditingController.text,
-        );
-        final newState = value.copyWith(searchResults: searchResults);
-        state = AsyncValue.data(newState);
-      case AsyncLoading():
-        return;
-      case AsyncError():
-        return;
-    }
+    state.focusNode.unfocus();
+    final repository = SearchCourseRepository();
+    final searchResults = await repository.searchCourses(
+      selectedChoicesMap: state.selectedChoicesMap,
+      searchWord: state.textEditingController.text,
+    );
+    state = state.copyWith(searchResults: searchResults);
   }
 
   void onCleared() {
-    switch (state) {
-      case AsyncData(:final value):
-        value.textEditingController.clear();
-      case AsyncLoading():
-        return;
-      case AsyncError():
-        return;
-    }
+    state.textEditingController.clear();
   }
 
   void onCheckboxTapped({
@@ -67,78 +89,67 @@ final class SearchCourseViewModel extends _$SearchCourseViewModel {
     required SearchCourseFilterOptionChoice choice,
     required bool? isSelected,
   }) {
-    debugPrint(
-      'onCheckboxTapped: ${filterOption.name}, ${choice.label}, $isSelected',
-    );
-    switch (state) {
-      case AsyncData(:final value):
-        // Create a mutable deep copy of the map and its lists
-        final selectedChoicesMap =
-            Map<
-              SearchCourseFilterOptions,
-              List<SearchCourseFilterOptionChoice>
-            >.fromEntries(
-              value.selectedChoicesMap.entries.map(
-                (entry) => MapEntry(
-                  entry.key,
-                  List<SearchCourseFilterOptionChoice>.from(entry.value),
-                ),
-              ),
-            );
-        if (isSelected ?? false) {
-          selectedChoicesMap[filterOption]?.add(choice);
-        } else {
-          selectedChoicesMap[filterOption]?.remove(choice);
-        }
-
-        final visibilityStatus = _setVisibilityStatus(selectedChoicesMap);
-
-        for (final e in SearchCourseFilterOptions.values) {
-          if (value.visibilityStatus.contains(e) &&
-              !visibilityStatus.contains(e)) {
-            selectedChoicesMap[e] = [];
-          }
-        }
-
-        if (!value.visibilityStatus.contains(SearchCourseFilterOptions.grade) &&
-            visibilityStatus.contains(SearchCourseFilterOptions.grade)) {
-          final gradeChoice = SearchCourseFilterOptions.grade.choices
-              .firstWhereOrNull(
-                (e) => e.id == value.grade?.deprecatedFilterOptionChoiceKey,
-              );
-          if (gradeChoice != null) {
-            selectedChoicesMap[SearchCourseFilterOptions.grade]?.add(
-              gradeChoice,
-            );
-          }
-        }
-
-        if (!value.visibilityStatus.contains(
-              SearchCourseFilterOptions.course,
-            ) &&
-            visibilityStatus.contains(SearchCourseFilterOptions.course)) {
-          final courseChoice = SearchCourseFilterOptions.course.choices
-              .firstWhereOrNull(
-                (e) =>
-                    e.id == value.academicArea?.deprecatedFilterOptionChoiceKey,
-              );
-          if (courseChoice != null) {
-            selectedChoicesMap[SearchCourseFilterOptions.course]?.add(
-              courseChoice,
-            );
-          }
-        }
-
-        final newState = value.copyWith(
-          selectedChoicesMap: selectedChoicesMap,
-          visibilityStatus: visibilityStatus,
+    // Create a mutable deep copy of the map and its lists
+    final selectedChoicesMap =
+        Map<
+          SearchCourseFilterOptions,
+          List<SearchCourseFilterOptionChoice>
+        >.fromEntries(
+          state.selectedChoicesMap.entries.map(
+            (entry) => MapEntry(
+              entry.key,
+              List<SearchCourseFilterOptionChoice>.from(entry.value),
+            ),
+          ),
         );
-        state = AsyncValue.data(newState);
-      case AsyncLoading():
-        return;
-      case AsyncError():
-        return;
+    if (isSelected ?? false) {
+      selectedChoicesMap[filterOption]?.add(choice);
+    } else {
+      selectedChoicesMap[filterOption]?.remove(choice);
     }
+
+    final visibilityStatus = _setVisibilityStatus(selectedChoicesMap);
+
+    for (final e in SearchCourseFilterOptions.values) {
+      if (state.visibilityStatus.contains(e) && !visibilityStatus.contains(e)) {
+        selectedChoicesMap[e] = [];
+      }
+    }
+
+    if (!state.visibilityStatus.contains(SearchCourseFilterOptions.grade) &&
+        visibilityStatus.contains(SearchCourseFilterOptions.grade)) {
+      final gradeChoice = SearchCourseFilterOptions.grade.choices
+          .firstWhereOrNull(
+            (e) => e.id == state.grade.value?.deprecatedFilterOptionChoiceKey,
+          );
+      if (gradeChoice != null) {
+        selectedChoicesMap[SearchCourseFilterOptions.grade]?.add(
+          gradeChoice,
+        );
+      }
+    }
+
+    if (!state.visibilityStatus.contains(
+          SearchCourseFilterOptions.course,
+        ) &&
+        visibilityStatus.contains(SearchCourseFilterOptions.course)) {
+      final courseChoice = SearchCourseFilterOptions.course.choices
+          .firstWhereOrNull(
+            (e) =>
+                e.id ==
+                state.academicArea.value?.deprecatedFilterOptionChoiceKey,
+          );
+      if (courseChoice != null) {
+        selectedChoicesMap[SearchCourseFilterOptions.course]?.add(
+          courseChoice,
+        );
+      }
+    }
+
+    state = state.copyWith(
+      selectedChoicesMap: selectedChoicesMap,
+      visibilityStatus: visibilityStatus,
+    );
   }
 
   Set<SearchCourseFilterOptions> _setVisibilityStatus(
@@ -183,6 +194,6 @@ final class SearchCourseViewModel extends _$SearchCourseViewModel {
   }
 
   void onResultRowTapped(Map<String, dynamic> record) {
-    state.value?.focusNode.unfocus();
+    state.focusNode.unfocus();
   }
 }

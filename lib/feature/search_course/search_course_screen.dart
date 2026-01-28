@@ -1,9 +1,11 @@
-import 'package:dotto/controller/user_controller.dart';
+import 'dart:async';
+
 import 'package:dotto/feature/kamoku_detail/kamoku_detail_screen.dart';
 import 'package:dotto/feature/search_course/domain/search_course_filter_option_choice.dart';
 import 'package:dotto/feature/search_course/domain/search_course_filter_options.dart';
+import 'package:dotto/feature/search_course/search_course_domain_error.dart';
 import 'package:dotto/feature/search_course/search_course_viewmodel.dart';
-import 'package:dotto/feature/search_course/search_course_viewmodel_state.dart';
+import 'package:dotto/feature/search_course/search_course_viewstate.dart';
 import 'package:dotto/feature/search_course/widget/search_course_action_buttons.dart';
 import 'package:dotto/feature/search_course/widget/search_course_box.dart';
 import 'package:dotto/feature/search_course/widget/search_course_filter_section.dart';
@@ -11,62 +13,85 @@ import 'package:dotto/feature/search_course/widget/search_course_result_section.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final class SearchCourseScreen extends ConsumerWidget {
+final class SearchCourseScreen extends ConsumerStatefulWidget {
   const SearchCourseScreen({super.key});
 
+  @override
+  ConsumerState<SearchCourseScreen> createState() => _SearchCourseScreenState();
+}
+
+final class _SearchCourseScreenState extends ConsumerState<SearchCourseScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ref.read(searchCourseViewModelProvider.notifier).onAppear());
+    });
+  }
+
   Widget _body({
-    required AsyncValue<SearchCourseViewModelState> viewModelAsync,
+    required SearchCourseViewState viewModel,
     required void Function(
-      SearchCourseFilterOptions,
-      SearchCourseFilterOptionChoice,
-      bool?,
+      SearchCourseFilterOptions filterOption,
+      SearchCourseFilterOptionChoice choice,
+      bool? isSelected,
     )
     onChanged,
     required void Function() onCleared,
     required void Function() onSearchButtonTapped,
     required void Function(Map<String, dynamic>) onTapped,
   }) {
-    switch (viewModelAsync) {
-      case AsyncData(:final value):
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SearchCourseBox(
-                textEditingController: value.textEditingController,
-                focusNode: value.focusNode,
-                onCleared: onCleared,
-                onSubmitted: (value) => onSearchButtonTapped(),
-              ),
-              SearchCourseFilterSection(
-                visibilityStatus: value.visibilityStatus,
-                selectedChoicesMap: value.selectedChoicesMap,
-                onChanged: onChanged,
-              ),
-              SearchCourseActionButtons(
-                onSearchButtonTapped: onSearchButtonTapped,
-              ),
-              SearchCourseResultSection(onTapped: onTapped),
-            ],
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SearchCourseBox(
+            textEditingController: viewModel.textEditingController,
+            focusNode: viewModel.focusNode,
+            onCleared: onCleared,
+            onSubmitted: (value) => onSearchButtonTapped(),
           ),
-        );
-      case AsyncLoading():
-        return const Center(child: CircularProgressIndicator());
-      case AsyncError(:final error):
-        return Center(child: Text('Error: $error'));
-    }
+          SearchCourseFilterSection(
+            visibilityStatus: viewModel.visibilityStatus,
+            selectedChoicesMap: viewModel.selectedChoicesMap,
+            onChanged: onChanged,
+          ),
+          SearchCourseActionButtons(
+            onSearchButtonTapped: onSearchButtonTapped,
+          ),
+          SearchCourseResultSection(
+            courses: viewModel.searchResults ?? [],
+            personalLessonIdList: viewModel.personalLessonIdList.value ?? [],
+            onTapped: onTapped,
+            onAddButtonTapped: (lessonId) async {
+              try {
+                await ref
+                    .read(searchCourseViewModelProvider.notifier)
+                    .onAddButtonTapped(lessonId);
+              } on SearchCourseDomainError catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.message)),
+                  );
+                }
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final viewModelAsync = ref.watch(searchCourseViewModelProvider);
-    final user = ref.watch(userProvider);
+  Widget build(BuildContext context) {
+    final viewModel = ref.watch(searchCourseViewModelProvider);
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(title: const Text('科目'), centerTitle: false),
       body: _body(
-        viewModelAsync: viewModelAsync,
+        viewModel: viewModel,
         onChanged: (filterOption, choice, isSelected) => ref
             .read(searchCourseViewModelProvider.notifier)
             .onCheckboxTapped(
@@ -89,7 +114,6 @@ final class SearchCourseScreen extends ConsumerWidget {
                 lessonId: lessonId,
                 lessonName: lessonName,
                 kakomonLessonId: kakomonLessonId,
-                isAuthenticated: user != null,
               ),
               settings: RouteSettings(
                 name:

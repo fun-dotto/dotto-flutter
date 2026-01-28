@@ -1,13 +1,14 @@
+import 'package:dotto/controller/user_controller.dart';
 import 'package:dotto/feature/kamoku_detail/kamoku_detail_feedback.dart';
 import 'package:dotto/feature/kamoku_detail/kamoku_detail_kakomon_list.dart';
 import 'package:dotto/feature/kamoku_detail/kamoku_detail_syllabus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final class KamokuDetailScreen extends StatelessWidget {
+final class KamokuDetailScreen extends ConsumerWidget {
   const KamokuDetailScreen({
     required this.lessonId,
     required this.lessonName,
-    required this.isAuthenticated,
     super.key,
     this.kakomonLessonId,
   });
@@ -15,10 +16,12 @@ final class KamokuDetailScreen extends StatelessWidget {
   final int lessonId;
   final String lessonName;
   final int? kakomonLessonId;
-  final bool isAuthenticated;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.read(userProvider);
+    final isAuthenticated = user != null;
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(

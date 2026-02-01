@@ -58,7 +58,7 @@ dart pub global activate flutterfire_cli
 flutterfire configure
 ```
 
-メンバーに`.env`ファイルをもらい、プロジェクト直下に配置します。
+`.env.keys`ファイルをもらってください．詳細は[dotenvxとpre-commitのセットアップ](07_Dotenvx.md#envkeysファイルのセットアップ)を参照してください．
 
 ## プロジェクトをセットアップ
 
@@ -88,7 +88,7 @@ task run
 
 Mac と iPhone を接続します。
 
-メンバーに iOS Fastlane の`.env`ファイルをもらい、`ios/fastlane/`に配置します。
+`.env.keys`ファイルも`ios/fastlane/`に配置する必要があります．詳細は[dotenvxとpre-commitのセットアップ](07_Dotenvx.md#envkeysファイルのセットアップ)を参照してください．
 
 以下のコマンドを実行します。
 

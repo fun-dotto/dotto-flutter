@@ -3,3 +3,5 @@
 flutter = "3.38.7"
 node = "24.13.0"
 ruby = "4.0.1"
+dotenvx = "latest"
+pre-commit = "latest"

@@ -28,7 +28,7 @@ platform :ios do
   desc "Build for Ad Hoc"
   lane :build_adhoc do
     match_adhoc_readonly
-    sh( "flutter", "build", "ios", "--release", "--dart-define-from-file=./.env" )
+    sh( "dotenvx decrypt -f .env --stdout > .env.decrypted && flutter build ios --release --dart-define-from-file=.env.decrypted; rm -f .env.decrypted" )
     build_app(
       clean: true,
       export_method: "ad-hoc",
@@ -43,7 +43,7 @@ platform :ios do
   desc "Build for App Store"
   lane :build_appstore do
     match_appstore_readonly
-    sh( "flutter", "build", "ios", "--release", "--dart-define-from-file=./.env" )
+    sh( "dotenvx decrypt -f .env --stdout > .env.decrypted && flutter build ios --release --dart-define-from-file=.env.decrypted; rm -f .env.decrypted" )
     build_app(
       export_method: "app-store",
       export_options: {

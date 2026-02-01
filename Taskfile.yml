@@ -24,6 +24,8 @@ tasks:
     cmds:
       - "{{.FLUTTER}} config --enable-swift-package-manager"
       - "{{.FLUTTER}} pub get"
+      - "mise install"
+      - "pre-commit install"
 
   install-all:
     desc: Install dependencies for all projects
@@ -82,7 +84,7 @@ tasks:
   run:
     desc: Run the Flutter app
     cmds:
-      - "{{.FLUTTER}} run --dart-define-from-file=./.env"
+      - "dotenvx decrypt --stdout > .env.decrypted && {{.FLUTTER}} run --dart-define-from-file=.env.decrypted; rm -f .env.decrypted"
 
   run-storybook:
     desc: Run the Storybook app
@@ -125,13 +127,13 @@ tasks:
     desc: Build iOS release
     cmds:
       - task: build
-      - "{{.FLUTTER}} build ios --release --dart-define-from-file=./.env"
+      - "dotenvx decrypt --stdout > .env.decrypted && {{.FLUTTER}} build ios --release --dart-define-from-file=.env.decrypted; rm -f .env.decrypted"
 
   build-android:
     desc: Build Android release appbundle
     cmds:
       - task: build
-      - "{{.FLUTTER}} build appbundle --release --dart-define-from-file=./.env"
+      - "dotenvx decrypt --stdout > .env.decrypted && {{.FLUTTER}} build appbundle --release --dart-define-from-file=.env.decrypted; rm -f .env.decrypted"
 
   deploy-ios-firebase-app-distribution:
     desc: Deploy iOS to Firebase App Distribution
